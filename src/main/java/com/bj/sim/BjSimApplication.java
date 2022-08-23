@@ -23,10 +23,10 @@ public class BjSimApplication {
 
     private static Table configureSimulation(String[] args) {
         if(args[0].equals("--rounds")) rounds = Integer.valueOf(args[1]);
-        return configureTable(args, null, false);
+        return configureTable(args, null, false, false);
     }
 
-    private static Table configureTable(String[]args, Table playTable, boolean inplay) {
+    private static Table configureTable(String[]args, Table playTable, boolean inplay, boolean keepPlayer) {
         // declare local fields
         Double bjPayout=0.0;
         boolean s17,rsa,lateSurrender;
@@ -51,6 +51,7 @@ public class BjSimApplication {
 
         // set the play table
         if(inplay) return playTable;
+        else if(keepPlayer) return new Table(tr, playerCount, playTable.getPlayers());
         else return new Table(tr, playerCount);
     }
 
@@ -59,7 +60,9 @@ public class BjSimApplication {
         System.out.println("Running Simulation...");
         for(int i = 0; i < rounds ; i++) {
             if(playTable.getShoe().size() < 25) {
-                playTable = configureTable(args, null, false);
+
+                System.out.println("Player balance at end of shoe is..." + playTable.getPlayers().get(0).getBankroll() + "...");
+                playTable = configureTable(args, playTable, false, true);
                 System.out.println("\n\n===================================================\n" +
                         "\n===================================================\n" +
                         "\nRESHUFFLING SHOE...\n" +
@@ -68,7 +71,7 @@ public class BjSimApplication {
             }
             game.playRound(i, args, playTable);
             System.out.println(playTable.getPlayers().get(0).getSpecificBet(0).toString());
-            configureTable(args, playTable, true);
+            configureTable(args, playTable, true, true);
         }
     }
 

@@ -3,8 +3,9 @@ package com.bj.sim.entities.floor;
 import com.bj.sim.config.TableRules;
 import com.bj.sim.entities.cards.Card;
 import com.bj.sim.entities.cards.Hand;
-import com.bj.sim.entities.strategy.BettingStrategy;
+import com.bj.sim.entities.strategy.betting.BalancingActStrategy;
 import com.bj.sim.entities.strategy.DasDdH17Ns;
+import com.bj.sim.entities.strategy.betting.ModifiedTimmyStrategy;
 import com.bj.sim.enums.Chip;
 
 import java.util.ArrayList;
@@ -13,38 +14,50 @@ import java.util.HashMap;
 public class Player {
     // can have multiple hands i.e. splitting
     private ArrayList<Hand> hands;
-    private ArrayList<BettingStrategy> bets;
+    private ArrayList<ModifiedTimmyStrategy> bets;
     // needs to have a bankroll of some kind
-    private HashMap<Chip, Integer> bankroll;
-    private int tableBankroll;
+//    private HashMap<Chip, Integer> bankroll;
+    private double bankroll;
+    private double tableBankroll;
     // play strategy?
     private DasDdH17Ns playStrategy;
 
     public Player(TableRules rules) {
-        setBankroll();
+        resetBankroll();
         this.hands = new ArrayList<>();
         this.bets = new ArrayList<>();
-        this.bets.add(new BettingStrategy(rules, this));
+        this.bets.add(new ModifiedTimmyStrategy(rules));
         this.playStrategy = new DasDdH17Ns();
-        this.tableBankroll = this.getBankrollTotal()/2;
+        this.tableBankroll = this.getBankroll()/2;
     }
 
     // used for testing
     public Player(ArrayList<Hand> startingHand, TableRules rules) {
-        setBankroll();
+        resetBankroll();
         this.hands = new ArrayList<>();
         this.hands.addAll(startingHand);
         this.bets = new ArrayList<>();
-        this.bets.add(new BettingStrategy(rules, this));
+        this.bets.add(new ModifiedTimmyStrategy(rules));
         this.playStrategy = new DasDdH17Ns();
-        this.tableBankroll = this.getBankrollTotal()/2;
+        this.tableBankroll = this.getBankroll()/2;
     }
 
-    private void setBankroll() {
-        this.bankroll = new HashMap<>();
-        this.bankroll.put(Chip.FIVE, 50);
-        this.bankroll.put(Chip.TWENTY_FIVE, 10);
-        this.bankroll.put(Chip.HUNDRED, 5);
+//    private void setBankroll() {
+//        this.bankroll = new HashMap<>();
+//        this.bankroll.put(Chip.FIVE, 50);
+//        this.bankroll.put(Chip.TWENTY_FIVE, 10);
+//        this.bankroll.put(Chip.HUNDRED, 5);
+//    }
+    private void resetBankroll() {
+        this.bankroll = 1000;
+    }
+
+    public double addToBankroll(double amountToAdd) {
+        return this.bankroll += amountToAdd;
+    }
+
+    public double subFromBankroll(double amountToSub) {
+        return this.bankroll -= amountToSub;
     }
 
     public Hand viewPlayerHandByIndex(int idx) {
@@ -53,20 +66,24 @@ public class Player {
         return this.hands.get(idx);
     }
 
-    public HashMap<Chip, Integer> getBankroll() {
+    public double getBankroll() {
         return this.bankroll;
     }
 
-    public Integer getBankrollTotal() {
-        return (bankroll.get(Chip.ONE)           == null ? 0 : bankroll.get(Chip.ONE)          * 1) +
-                (bankroll.get(Chip.FIVE)         == null ? 0 : bankroll.get(Chip.FIVE)         * 5) +
-                (bankroll.get(Chip.TWENTY_FIVE)  == null ? 0 : bankroll.get(Chip.TWENTY_FIVE)  * 25) +
-                (bankroll.get(Chip.HUNDRED)      == null ? 0 : bankroll.get(Chip.HUNDRED)      * 100) +
-                (bankroll.get(Chip.FIVE_HUNDRED) == null ? 0 : bankroll.get(Chip.FIVE_HUNDRED) * 500) +
-                (bankroll.get(Chip.THOUSAND)     == null ? 0 : bankroll.get(Chip.THOUSAND)     * 1000);
-    }
+//    public HashMap<Chip, Integer> getBankroll() {
+//        return this.bankroll;
+//    }
+//
+//    public Integer getBankrollTotal() {
+//        return (bankroll.get(Chip.ONE)           == null ? 0 : bankroll.get(Chip.ONE)          * 1) +
+//                (bankroll.get(Chip.FIVE)         == null ? 0 : bankroll.get(Chip.FIVE)         * 5) +
+//                (bankroll.get(Chip.TWENTY_FIVE)  == null ? 0 : bankroll.get(Chip.TWENTY_FIVE)  * 25) +
+//                (bankroll.get(Chip.HUNDRED)      == null ? 0 : bankroll.get(Chip.HUNDRED)      * 100) +
+//                (bankroll.get(Chip.FIVE_HUNDRED) == null ? 0 : bankroll.get(Chip.FIVE_HUNDRED) * 500) +
+//                (bankroll.get(Chip.THOUSAND)     == null ? 0 : bankroll.get(Chip.THOUSAND)     * 1000);
+//    }
 
-    public BettingStrategy getSpecificBet(int bet) {
+    public ModifiedTimmyStrategy getSpecificBet(int bet) {
         return this.bets.get(bet);
     }
 
@@ -112,7 +129,7 @@ public class Player {
         return t.getPlayers().get(0).getHands().get(handIndex);
     }
 
-    public int getTableBankroll() {
+    public double getTableBankroll() {
         return tableBankroll;
     }
 }

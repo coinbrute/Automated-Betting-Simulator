@@ -1,10 +1,5 @@
 package com.bj.sim.entities.cards;
 
-import com.bj.sim.config.TableRules;
-import com.bj.sim.entities.floor.Player;
-import com.bj.sim.entities.strategy.BettingStrategy;
-import com.bj.sim.enums.Value;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

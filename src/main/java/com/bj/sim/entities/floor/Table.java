@@ -14,6 +14,23 @@ public class Table {
     private List<Player> players;
     private TableRules rules; // tableRulConfig i.e. # of shoes, rsa, # of splits allowed ace/non-ace, # of draws after ace split, surrender rules
 
+    public Table(TableRules rules, Integer playerCount, List<Player> player) {
+        this.rules = rules;
+        this.players = new ArrayList<>();
+        for(int i = 0; i < playerCount; i++) {
+            this.players.add(player.get(i));
+        }
+        this.dealer = new Dealer(players.get(0));
+        List<Deck> decks = new ArrayList<>();
+        for(int i = 0; i < this.rules.numOfDecks(); i++) {
+            decks.add(new Deck());
+        }
+        this.shoe = new ArrayList<>();
+        for(Deck d : decks)
+            for(Card c : d.getDeck())
+                this.shoe.add(c);
+    }
+
     public Table(TableRules rules, Integer playerCount) {
         this.rules = rules;
         this.players = new ArrayList<>();

@@ -5,7 +5,6 @@ import com.bj.sim.entities.cards.Deck;
 import com.bj.sim.entities.cards.Hand;
 import com.bj.sim.entities.floor.Player;
 import com.bj.sim.entities.floor.Table;
-import com.bj.sim.entities.strategy.BettingStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,7 @@ public class Gameplay {
 
     public static Table playRound(int i, String[] args, Table playTable) {
         System.out.println("Playing round... " + i + "");
-
+        System.out.println("Player balance at beginning of round is..." + playTable.getPlayers().get(0).getBankroll() + "...");
         // deal initial cards to player and dealer alternating dealing
         Card p1,d1,p2,d2;
         p1 = Deck.draw(playTable.getShoe());
@@ -40,13 +39,18 @@ public class Gameplay {
         int handIndex = player1.numberOfSplits()-1;
 
         // declare and initialize bet variable
-        int currentBet = player1.getSpecificBet(handIndex).getCurrentBet();
+        int currentBet = player1.getSpecificBet(handIndex).getCurrentBet(); // amount being bet for this hand
 
         // check for dealer blackjack with ace show card
         if((playTable.getDealer().showDealerHand().calculateTotal() == 21 &&
-                playTable.getDealer().getDealerShowCard().getValueName().equals("Ace")) ||
-                player1.hasBJ(handIndex))
+                playTable.getDealer().getDealerShowCard().getValueName().equals("Ace"))) {
             move = "STAND";
+        }
+        // check player blackjack and run associated strategy;
+        if(player1.hasBJ(handIndex)) {
+            player1.getSpecificBet(handIndex).runBettingStrategyAnalysis("BJ",player1);
+            return playTable;
+        }
 
         // perform while loop on the player initially dealt hand and perform perfect basic strategy until the move is stand
         while(!move.equals("STAND")) {
@@ -153,7 +157,7 @@ public class Gameplay {
     }
 
     private static void finalResults(Player player1, Table playTable, int currentBet, int handIndex) {
-//        System.out.println("***** Player Finished moves *****");
+        System.out.println("***** Player Finished moves *****");
 //        System.out.println("FINAL HAND TALLY...");
 //        System.out.println("PLAYER HAND..." + player1.getHands().toString());
 //        System.out.println("DEALER HAND..." + playTable.getDealer().showDealerHand().toString(false, false));
@@ -172,8 +176,8 @@ public class Gameplay {
             } else {
                 outcome = "LOST";
             }
-            handleBetting(outcome,currentBet, handIndex, player1);
             System.out.println("OUTCOME FOR PLAYER HAND " + hand + " IS PLAYER " + outcome + " AGAINST A DEALER HAND OF " + playTable.getDealer().showDealerHand().toString());
+            handleBetting(outcome,currentBet, handIndex, player1);
         }
 
         System.out.println("\n===================================================\n");
@@ -181,8 +185,10 @@ public class Gameplay {
 
     private static void handleBetting(String handOutcome, int currentBet, int idx, Player player) {
         System.out.println("Bet for current hand is: " + currentBet + " chips. Bet Outcome is: " + handOutcome);
-        player.getSpecificBet(idx).runBettingStrategyAnalysis(handOutcome, player);
+        // perform the betting strategy algorithm and update player bet for next hand as well as the bankroll
+        player.getSpecificBet(0).runBettingStrategyAnalysis(handOutcome, player);
         System.out.println("Strategy dictates bet is to be: " + player.getSpecificBet(idx).getCurrentBet() + " chips for the next hand.");
+        System.out.println("Player balance at end of round is..." + player.getBankroll() + "...");
     }
 
     private static String makeSplitDecisions(String splitDecision, Player player1, String[] args, String move, List<Hand> hands, int startingSplitHand, Table playTable) {
@@ -236,7 +242,7 @@ public class Gameplay {
                     } else if(move.equals("HIT")) {
                         if((player1.numberOfSplits() < playTable.getRules().numOfSplitsOnAces() || player1.numberOfSplits() < playTable.getRules().numOfSplitsOnNonAces())) {
                             Player.hit(playTable, hands.get(handIndex), handIndex);
-                            System.out.println("Hitting on a Hit decision...");
+//                            System.out.println("Hitting on a Hit decision...");
                             move = player1.getPlayStrategy().decideMove(player1, playTable.getDealer(), hands.get(handIndex));
                         } else {
                             Player.hit(playTable, hands.get(handIndex), handIndex);
