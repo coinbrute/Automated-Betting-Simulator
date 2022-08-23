@@ -10,13 +10,37 @@ public class BjSimApplication {
     private static Integer rounds = 1;
     private static Gameplay game;
     private static long startTime;
+    private static double pnl = 0.0;
 
     public static void main(String[] args) {
         // run and time the simulation
         startTime = System.currentTimeMillis();
         game = new Gameplay();
         Table playTable = configureSimulation(args);
-        executeSimulation(args, playTable);
+        for(int i = 0; i < rounds; i++) {
+
+            if(playTable.getPlayers().get(0).getBankroll() > 1000) pnl += playTable.getPlayers().get(0).subFromBankroll(playTable.getPlayers().get(0).getBankroll()-1000);
+            else if(playTable.getPlayers().get(0).getBankroll() < 600) {
+                System.out.println("Player ended up with a loss of: " + (1000 - playTable.getPlayers().get(0).getBankroll()) + "...\nThere is a total player vault pnl so far of: " + pnl + "...");
+                if(pnl > 1000) {
+                    System.out.println("Player has accumulated enough pnl to top up loss from last shoe with some left over... Topping back up to $1000 bankroll...");
+                    playTable.getPlayers().get(0).addToBankroll(1000-playTable.getPlayers().get(0).getBankroll());
+                } else if(pnl <= 1000 && pnl > 0) {
+                    System.out.println("Player is using the pnl accumulated to top up loss... Topping up as much as possible");
+                    playTable.getPlayers().get(0).addToBankroll(1000-(pnl-playTable.getPlayers().get(0).getBankroll()));
+                } else {
+                    System.out.println("In order to continue the simulation the pnl for the player has not accumulated enough yet so the player will put more in from the bank themselves...");
+                    System.out.println("Topping back up to $1000...");
+                    playTable.getPlayers().get(0).addToBankroll(1000-playTable.getPlayers().get(0).getBankroll());
+                    pnl -= 1000-playTable.getPlayers().get(0).getBankroll();
+                }
+            }
+            executeSimulation(args, playTable);
+            System.out.println("\n******************************************************\n");
+
+        }
+        System.out.println("Player balance at end of simulation is..." + playTable.getPlayers().get(0).getBankroll() + "...");
+        System.out.println("Simulation evaluated " + rounds + " rounds...");
         System.out.println("\n===================================================\n");
         System.out.println("That took " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
@@ -58,21 +82,34 @@ public class BjSimApplication {
     private static void executeSimulation(String[] args, Table playTable) {
         // run the simulation and call configure round to retrieve the table again.
         System.out.println("Running Simulation...");
-        for(int i = 0; i < rounds ; i++) {
-            if(playTable.getShoe().size() < 25) {
+            for(int i = 0; i < rounds ; i++) {
+                if(playTable.getPlayers().get(0).getBankroll() < 600) {
+                    System.out.println("Player balance is less than 60% walkaway threshold..." + playTable.getPlayers().get(0).getBankroll() + "...");
+                    System.out.println("It took " + i + "/" + rounds + " rounds to reach loss threshold.");
+                    return;
+                }
+                if(playTable.getShoe().size() < 25) {
+                    if(playTable.getPlayers().get(0).getBankroll() < 600) {
+                        System.out.println("Player balance is less than 60% walkaway threshold..." + playTable.getPlayers().get(0).getBankroll() + "...");
+                        System.out.println("It took " + i + "/" + rounds + " rounds to reach loss threshold.");
+                        return;
 
-                System.out.println("Player balance at end of shoe is..." + playTable.getPlayers().get(0).getBankroll() + "...");
-                playTable = configureTable(args, playTable, false, true);
-                System.out.println("\n\n===================================================\n" +
-                        "\n===================================================\n" +
-                        "\nRESHUFFLING SHOE...\n" +
-                        "\n===================================================\n" +
-                        "\n===================================================\n\n");
+                    }
+                    System.out.println("Player balance at end of shoe is..." + playTable.getPlayers().get(0).getBankroll() + "...");
+                    playTable = configureTable(args, playTable, false, true);
+                    System.out.println("\n\n===================================================\n" +
+                            "\n===================================================\n" +
+                            "\nRESHUFFLING SHOE...\n" +
+                            "\n===================================================\n" +
+                            "\n===================================================\n\n");
+                }
+                game.playRound(i, args, playTable);
+                System.out.println(playTable.getPlayers().get(0).getSpecificBet(0).toString());
+                configureTable(args, playTable, true, true);
             }
-            game.playRound(i, args, playTable);
-            System.out.println(playTable.getPlayers().get(0).getSpecificBet(0).toString());
-            configureTable(args, playTable, true, true);
-        }
+
+        System.out.println("Player balance at end of shoe is..." + playTable.getPlayers().get(0).getBankroll() + "...");
+        System.out.println("Player played " + rounds + " hands...");
     }
 
 }
